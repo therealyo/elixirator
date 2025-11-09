@@ -14,7 +14,6 @@ defmodule ElixiratorWeb.TravelLive.New do
       |> assign(travel: travel, fuel_required: 0) 
       |> assign_form(Travels.change_travel(travel))
 
-    
     {:ok, socket}
   end
   
@@ -27,13 +26,13 @@ defmodule ElixiratorWeb.TravelLive.New do
           for={@form}
           class="bg-base-100 text-base-content p-6 [[data-theme=dark]_&]:bg-zinc-900"
           phx-change="validate"
-          phx-submit="create_travel"
+          phx-submit="save"
         >
           <.input type="number" label="Equipment Mass"  field={@form[:equipment_mass]}/>
           <.inputs_for :let={path_f} field={@form[:path]}>
             <input type="hidden" name="travel[path_sort][]" value={path_f.index} />
-            <.input type="select" label="Planet" options={Enum.map([:earth, :moon, :mars], fn p -> Phoenix.Naming.humanize(p) end)} field={path_f[:planet]}/>
-            <.input type="select" label="Action" options={[:launch, :land]} field={path_f[:action]}/>
+            <.input type="select" label="Launch" options={normalize_planets_names()} field={path_f[:launch]}/>
+            <.input type="select" label="Land" options={normalize_planets_names()} field={path_f[:land]}/>
             <button
               type="button"
               name="travel[path_drop][]"
@@ -56,10 +55,15 @@ defmodule ElixiratorWeb.TravelLive.New do
           >
             <.icon name="hero-plus" class="w-4 h-4 mr-2" /> Add Action Point
           </button>
+        <div class="flex justify-between pt-6">
+          <p>
+            Fuel Required: {@fuel_required}
+          </p>
+          <.button type="submit" phx-disable-with="Saving..." class="bg-green">
+            Save Travel
+          </.button>
+        </div>
         </.form>
-        <p class="p-6">
-          Fuel Required: {@fuel_required}
-        </p>
       </div>
     </Layouts.app>
     """
@@ -75,10 +79,12 @@ defmodule ElixiratorWeb.TravelLive.New do
     {:noreply, socket}
   end
   
-  def handle_event("create_travel", params, socket) do
+  def handle_event("save", params, socket) do
     Logger.info([params: params])
     {:noreply, socket}
   end
+
+  defp normalize_planets_names(), do: Enum.map([:earth, :moon, :mars], fn p -> Phoenix.Naming.humanize(p) end)
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
     form = to_form(changeset, as: "travel")

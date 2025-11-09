@@ -15,12 +15,14 @@ defmodule Elixirator.Travels.Travel do
 
   def changeset(%Travel{} = travel, attrs \\ %{}) do
     travel 
-    |> cast(attrs, []) 
+    |> cast(attrs, [:equipment_mass]) 
     |> cast_embed(
       :path, 
       required: true, 
       sort_param: :path_sort,
       drop_param: :path_drop
     )
+    |> validate_required([:equipment_mass])
+    |> validate_number(:equipment_mass, greater_than_or_equal_to: 0)
   end
 end
