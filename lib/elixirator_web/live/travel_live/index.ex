@@ -1,11 +1,11 @@
 defmodule ElixiratorWeb.TravelLive.Index do
   use ElixiratorWeb, :live_view
-  
+
   @impl Phoenix.LiveView
-  def mount(params, _session, socket) do
+  def mount(_params, _session, socket) do
     {:ok, socket}
   end
-  
+
   @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
@@ -13,7 +13,6 @@ defmodule ElixiratorWeb.TravelLive.Index do
       <.button patch={~p"/travels/new"} title="New Travel">
         New Travel
       </.button>
-
       Should render table here
     </Layouts.app>
     """

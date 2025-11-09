@@ -1,19 +1,92 @@
 defmodule ElixiratorWeb.TravelLive.New do
   use ElixiratorWeb, :live_view
 
+  require Logger
+
+  alias Elixirator.Travels  
+  alias Elixirator.Planets  
+  alias Elixirator.Travels.Travel
+  
   @impl Phoenix.LiveView
-  def mount(params, _session, socket) do
+  def mount(_params, _session, socket) do
+    travel = %Travel{}
+    socket = socket 
+      |> assign(travel: travel, fuel_required: 0) 
+      |> assign_form(Travels.change_travel(travel))
+
+    
     {:ok, socket}
   end
   
+  @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
-    <form
-      class="bg-base-100 text-base-content p-6 rounded-lg shadow [[data-theme=dark]_&]:bg-zinc-900"
-    >
-
-      
-    </form>
+    <Layouts.app flash={@flash}>
+      <div class="bg-base-100 text-base-content p-6 rounded-lg shadow [[data-theme=dark]_&]:bg-zinc-900">
+        <.form 
+          for={@form}
+          class="bg-base-100 text-base-content p-6 [[data-theme=dark]_&]:bg-zinc-900"
+          phx-change="validate"
+          phx-submit="create_travel"
+        >
+          <.input type="number" label="Equipment Mass"  field={@form[:equipment_mass]}/>
+          <.inputs_for :let={path_f} field={@form[:path]}>
+            <input type="hidden" name="travel[path_sort][]" value={path_f.index} />
+            <.input type="select" label="Planet" options={Enum.map([:earth, :moon, :mars], fn p -> Phoenix.Naming.humanize(p) end)} field={path_f[:planet]}/>
+            <.input type="select" label="Action" options={[:launch, :land]} field={path_f[:action]}/>
+            <button
+              type="button"
+              name="travel[path_drop][]"
+              value={path_f.index}
+              phx-click={JS.dispatch("change")}
+              class="btn btn-error btn-soft btn-sm"
+              title="Remove Point"
+            >
+              <.icon name="hero-x-mark" class="w-4 h-4" />
+            </button>
+          </.inputs_for>
+          <input type="hidden" name="travel[path_drop][]" />
+          
+          <button
+            type="button"
+            name="travel[path_sort][]"
+            value="new"
+            phx-click={JS.dispatch("change")}
+            class="btn btn-primary btn-soft"
+          >
+            <.icon name="hero-plus" class="w-4 h-4 mr-2" /> Add Action Point
+          </button>
+        </.form>
+        <p class="p-6">
+          Fuel Required: {@fuel_required}
+        </p>
+      </div>
+    </Layouts.app>
     """
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("validate", %{"travel" => travel_params}, socket) do
+    Logger.info("validate action")
+    Logger.info([params: travel_params])
+
+    changeset = Travels.change_travel(socket.assigns.travel, travel_params)
+    socket = assign_form(socket, Map.put(changeset, :action, :validate))
+    {:noreply, socket}
+  end
+  
+  def handle_event("create_travel", params, socket) do
+    Logger.info([params: params])
+    {:noreply, socket}
+  end
+
+  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
+    form = to_form(changeset, as: "travel")
+
+    if changeset.valid? do
+      assign(socket, form: form, check_errors: false)
+    else
+      assign(socket, form: form)
+    end
   end
 end
