@@ -18,6 +18,9 @@ defmodule ElixiratorWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    live "/travels", TravelLive.Index
+    live "/travels/new", TravelLive.New
   end
 
   # Other scopes may use custom stacks.
