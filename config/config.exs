@@ -8,7 +8,6 @@
 import Config
 
 config :elixirator,
-  ecto_repos: [Elixirator.Repo],
   generators: [timestamp_type: :utc_datetime]
 
 # Configures the endpoint
