@@ -31,8 +31,8 @@ defmodule ElixiratorWeb.TravelLive.New do
           <.input type="number" label="Equipment Mass"  field={@form[:equipment_mass]}/>
           <.inputs_for :let={path_f} field={@form[:path]}>
             <input type="hidden" name="travel[path_sort][]" value={path_f.index} />
-            <.input type="select" label="Launch" options={normalize_planets_names()} field={path_f[:launch]}/>
-            <.input type="select" label="Land" options={normalize_planets_names()} field={path_f[:land]}/>
+            <.input type="select" prompt="select launch point" label="Launch" options={Planets.get_planet_names()} field={path_f[:launch]}/>
+            <.input type="select" prompt="select landing point" label="Land" options={Planets.get_planet_names()} field={path_f[:land]}/>
             <button
               type="button"
               name="travel[path_drop][]"
@@ -44,8 +44,8 @@ defmodule ElixiratorWeb.TravelLive.New do
               <.icon name="hero-x-mark" class="w-4 h-4" />
             </button>
           </.inputs_for>
-          <input type="hidden" name="travel[path_drop][]" />
           
+          <input type="hidden" name="travel[path_drop][]" />
           <button
             type="button"
             name="travel[path_sort][]"
@@ -53,16 +53,17 @@ defmodule ElixiratorWeb.TravelLive.New do
             phx-click={JS.dispatch("change")}
             class="btn btn-primary btn-soft"
           >
-            <.icon name="hero-plus" class="w-4 h-4 mr-2" /> Add Action Point
+            <.icon name="hero-plus" class="w-4 h-4 mr-2" /> Add Segment 
           </button>
-        <div class="flex justify-between pt-6">
-          <p>
-            Fuel Required: {@fuel_required}
-          </p>
-          <.button type="submit" phx-disable-with="Saving..." class="bg-green">
-            Save Travel
-          </.button>
-        </div>
+          
+          <div class="flex justify-between pt-6">
+            <p>
+              Fuel Required: {@fuel_required}
+            </p>
+            <.button type="submit" phx-disable-with="Saving...">
+              Save Travel
+            </.button>
+          </div>
         </.form>
       </div>
     </Layouts.app>
@@ -71,20 +72,17 @@ defmodule ElixiratorWeb.TravelLive.New do
 
   @impl Phoenix.LiveView
   def handle_event("validate", %{"travel" => travel_params}, socket) do
-    Logger.info("validate action")
-    Logger.info([params: travel_params])
-
     changeset = Travels.change_travel(socket.assigns.travel, travel_params)
-    socket = assign_form(socket, Map.put(changeset, :action, :validate))
+    socket = socket 
+      |> assign_form(Map.put(changeset, :action, :validate)) 
+    
     {:noreply, socket}
   end
   
   def handle_event("save", params, socket) do
-    Logger.info([params: params])
     {:noreply, socket}
   end
 
-  defp normalize_planets_names(), do: Enum.map([:earth, :moon, :mars], fn p -> Phoenix.Naming.humanize(p) end)
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
     form = to_form(changeset, as: "travel")
