@@ -4,12 +4,17 @@ defmodule Elixirator.Travels do
 
   require Logger
   
-  def calculate_fuel_required(%Travel{equipment_mass: mass, path: path}) do
+  def calculate_fuel_required(%{equipment_mass: mass, path: _path}) when is_nil(mass) do
+    0
+  end
+  
+  @doc """
+  We calculate path in reverse, because we need to carry additional fuel
+  """
+  def calculate_fuel_required(%{equipment_mass: mass, path: path}) do
     path 
-    |> Enum.flat_map(fn s -> [%{type: :launch, planet: s.launch}, %{type: :land, planet: s.land}] end) 
     |> Enum.reverse()
     |> Enum.reduce(0, fn %{type: type, planet: planet}, acc -> 
-      Logger.info([planet: planet])
       acc + Planets.calculate_fuel_required(mass + acc, planet, type)
     end)
   end

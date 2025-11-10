@@ -31,20 +31,38 @@ defmodule ElixiratorWeb.TravelLive.New do
           <.input type="number" label="Equipment Mass"  field={@form[:equipment_mass]}/>
           <.inputs_for :let={path_f} field={@form[:path]}>
             <input type="hidden" name="travel[path_sort][]" value={path_f.index} />
-            <.input type="select" prompt="select launch point" label="Launch" options={Planets.get_planet_names()} field={path_f[:launch]}/>
-            <.input type="select" prompt="select landing point" label="Land" options={Planets.get_planet_names()} field={path_f[:land]}/>
-            <button
-              type="button"
-              name="travel[path_drop][]"
-              value={path_f.index}
-              phx-click={JS.dispatch("change")}
-              class="btn btn-error btn-soft btn-sm"
-              title="Remove Point"
-            >
-              <.icon name="hero-x-mark" class="w-4 h-4" />
-            </button>
+            <div class="mb-4">
+              <div class="flex flex-row gap-2 items-start">
+                <div class="flex-1 [&_.fieldset]:mb-0">
+                  <.input type="select" prompt="select action type" label="Action" options={[:launch, :land]} field={path_f[:type]}/>
+                </div>
+                <div class="flex-1 [&_.fieldset]:mb-0">
+                  <.input type="select" prompt="select planet" label="Planet" options={Planets.get_planet_names()} field={path_f[:planet]}/>
+                </div>
+                <div class="pt-6">
+                  <button
+                    type="button"
+                    name="travel[path_drop][]"
+                    value={path_f.index}
+                    phx-click={JS.dispatch("change")}
+                    class="btn btn-error btn-soft btn-sm"
+                    title="Remove Segment"
+                  >
+                    <.icon name="hero-x-mark" class="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </.inputs_for>
-          
+
+          <p
+            :for={msg <- @form[:path].errors}
+            class="mt-1.5 mb-4 flex gap-2 items-center text-sm text-error"
+          >
+            <.icon name="hero-exclamation-circle" class="size-5" />
+            {translate_error(msg)}
+          </p>
+
           <input type="hidden" name="travel[path_drop][]" />
           <button
             type="button"
@@ -73,16 +91,51 @@ defmodule ElixiratorWeb.TravelLive.New do
   @impl Phoenix.LiveView
   def handle_event("validate", %{"travel" => travel_params}, socket) do
     changeset = Travels.change_travel(socket.assigns.travel, travel_params)
+    fuel_required = calculate_fuel_required(changeset)
     socket = socket 
+      |> assign(fuel_required: fuel_required)
       |> assign_form(Map.put(changeset, :action, :validate)) 
     
     {:noreply, socket}
   end
   
-  def handle_event("save", params, socket) do
-    {:noreply, socket}
+  def handle_event("save", %{"travel" => params}, socket) do
+    changeset = Travels.change_travel(socket.assigns.travel, params)
+    
+    case Ecto.Changeset.apply_action(changeset, :insert) do
+      {:ok, travel} -> 
+        fuel_required = Travels.calculate_fuel_required(travel)
+        socket = socket 
+          |> put_flash(:info, "Travel is valid")
+          |> assign(travel: travel, fuel_required: fuel_required) 
+          |> assign_form(changeset)
+        {:noreply, socket}
+      
+      {:error, %Ecto.Changeset{} = changeset} ->
+        Logger.error("errors: #{inspect(changeset.errors)}")
+        socket = socket 
+          |> put_flash(:error, "Travel is not valid")
+          |> assign_form(changeset)
+        {:noreply, socket}
+    end
   end
 
+  defp calculate_fuel_required(%Ecto.Changeset{} = changeset) do
+    mass = Ecto.Changeset.get_field(changeset, :equipment_mass)
+    path = Ecto.Changeset.get_embed(changeset, :path)
+    
+    valid_path = 
+      path 
+      |> Enum.filter(fn segment -> segment.valid? end)
+      |> Enum.map(fn segment -> 
+        %{
+          type: Ecto.Changeset.get_change(segment, :type), 
+          planet: Ecto.Changeset.get_change(segment, :planet)
+        } 
+      end)
+
+    Travels.calculate_fuel_required(%{equipment_mass: mass, path: valid_path})
+  end
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
     form = to_form(changeset, as: "travel")

@@ -7,19 +7,23 @@ defmodule Elixirator.TravelsTest do
   
   describe "calculate_fuel_required" do
     test "should calculate Apollo 11 mission fuel correctly" do
-      segments = [
-        %Segment{launch: :Earth, land: :Moon}, 
-        %Segment{launch: :Moon, land: :Earth}
+      path = [
+        %Segment{type: :launch, planet: :Earth},
+        %Segment{type: :land, planet: :Moon}, 
+        %Segment{type: :launch, planet: :Moon}, 
+        %Segment{type: :land, planet: :Earth}
       ]
-      travel = %Travel{equipment_mass: 28801, path: segments}
+      travel = %Travel{equipment_mass: 28801, path: path}
 
       assert Travels.calculate_fuel_required(travel) == 51898
     end
     
     test "should calculate Mars mission fuel correctly" do
       segments = [
-        %Segment{launch: :Earth, land: :Mars},
-        %Segment{launch: :Mars, land: :Earth}
+        %Segment{type: :launch, planet: :Earth},
+        %Segment{type: :land, planet: :Mars},
+        %Segment{type: :launch, planet: :Mars},
+        %Segment{type: :land, planet: :Earth}
       ]
       travel = %Travel{equipment_mass: 14606, path: segments}
 
@@ -28,9 +32,12 @@ defmodule Elixirator.TravelsTest do
 
     test "should calculate Passenger Ship mission fuel correctly" do
       segments = [
-        %Segment{launch: :Earth, land: :Moon},
-        %Segment{launch: :Moon, land: :Mars},
-        %Segment{launch: :Mars, land: :Earth}
+        %Segment{type: :launch, planet: :Earth},
+        %Segment{type: :land, planet: :Moon},
+        %Segment{type: :launch, planet: :Moon},
+        %Segment{type: :land, planet: :Mars},
+        %Segment{type: :launch, planet: :Mars},
+        %Segment{type: :land, planet: :Earth}
       ]
       travel = %Travel{equipment_mass: 75432, path: segments}
 
