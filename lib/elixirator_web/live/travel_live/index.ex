@@ -13,7 +13,7 @@ defmodule ElixiratorWeb.TravelLive.Index do
       <.button patch={~p"/travels/new"} title="New Travel">
         New Travel
       </.button>
-      Should render table here
+      Should render table here, but we are not storing items
     </Layouts.app>
     """
   end

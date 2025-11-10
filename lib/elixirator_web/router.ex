@@ -20,7 +20,7 @@ defmodule ElixiratorWeb.Router do
     get "/", PageController, :home
 
     live "/travels", TravelLive.Index, :index
-    live "/travels/new", TravelLive.New, :new
+    live "/travels/new", TravelLive.Form, :new
   end
 
   # Other scopes may use custom stacks.

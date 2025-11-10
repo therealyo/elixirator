@@ -1,4 +1,4 @@
-defmodule ElixiratorWeb.TravelLive.New do
+defmodule ElixiratorWeb.TravelLive.Form do
   use ElixiratorWeb, :live_view
 
   require Logger
@@ -92,10 +92,10 @@ defmodule ElixiratorWeb.TravelLive.New do
   def handle_event("validate", %{"travel" => travel_params}, socket) do
     changeset = Travels.change_travel(socket.assigns.travel, travel_params)
     fuel_required = calculate_fuel_required(changeset)
-    socket = socket 
+    socket = socket
       |> assign(fuel_required: fuel_required)
-      |> assign_form(Map.put(changeset, :action, :validate)) 
-    
+      |> assign_form(Map.put(changeset, :action, :validate))
+
     {:noreply, socket}
   end
   
@@ -108,11 +108,11 @@ defmodule ElixiratorWeb.TravelLive.New do
         socket = socket 
           |> put_flash(:info, "Travel is valid")
           |> assign(travel: travel, fuel_required: fuel_required) 
-          |> assign_form(changeset)
+          |> assign_form(Travels.change_travel(travel))
         {:noreply, socket}
       
       {:error, %Ecto.Changeset{} = changeset} ->
-        Logger.error("errors: #{inspect(changeset.errors)}")
+        Logger.error([errors: changeset.errors])
         socket = socket 
           |> put_flash(:error, "Travel is not valid")
           |> assign_form(changeset)
@@ -122,18 +122,9 @@ defmodule ElixiratorWeb.TravelLive.New do
 
   defp calculate_fuel_required(%Ecto.Changeset{} = changeset) do
     mass = Ecto.Changeset.get_field(changeset, :equipment_mass)
-    path = Ecto.Changeset.get_embed(changeset, :path)
+    path = Ecto.Changeset.get_field(changeset, :path)
+    valid_path = Enum.filter(path, fn segment -> segment.planet && segment.type end)
     
-    valid_path = 
-      path 
-      |> Enum.filter(fn segment -> segment.valid? end)
-      |> Enum.map(fn segment -> 
-        %{
-          type: Ecto.Changeset.get_change(segment, :type), 
-          planet: Ecto.Changeset.get_change(segment, :planet)
-        } 
-      end)
-
     Travels.calculate_fuel_required(%{equipment_mass: mass, path: valid_path})
   end
 
