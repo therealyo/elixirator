@@ -9,7 +9,19 @@ defmodule Elixirator.Travels do
   end
   
   @doc """
-  We calculate path in reverse, because we need to carry additional fuel
+  We calculate path in reverse, 
+  because we need to carry additional fuel based on the remaining mass on each action
+
+  If path is 
+
+    %Segment{type: :launch, planet: :Earth},
+    %Segment{type: :land, planet: :Moon}, 
+    %Segment{type: :launch, planet: :Moon}, 
+    %Segment{type: :land, planet: :Earth}
+
+  Then on the last Earth land, we will have to calculate fuel only for equipment, because we will use 
+  all additional fuel before that on other actions, but before that for launch from Moon, 
+  we would carry extra fuel to achieve land on Earth, and so on
   """
   def calculate_fuel_required(%{equipment_mass: mass, path: path}) do
     path 
