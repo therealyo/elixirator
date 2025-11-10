@@ -78,9 +78,6 @@ defmodule ElixiratorWeb.TravelLive.Form do
             <p>
               Fuel Required: {@fuel_required}
             </p>
-            <.button type="submit" phx-disable-with="Saving...">
-              Save Travel
-            </.button>
           </div>
         </.form>
       </div>
@@ -99,27 +96,6 @@ defmodule ElixiratorWeb.TravelLive.Form do
     {:noreply, socket}
   end
   
-  def handle_event("save", %{"travel" => params}, socket) do
-    changeset = Travels.change_travel(socket.assigns.travel, params)
-    
-    case Ecto.Changeset.apply_action(changeset, :insert) do
-      {:ok, travel} -> 
-        fuel_required = Travels.calculate_fuel_required(travel)
-        socket = socket 
-          |> put_flash(:info, "Travel is valid")
-          |> assign(travel: travel, fuel_required: fuel_required) 
-          |> assign_form(Travels.change_travel(travel))
-        {:noreply, socket}
-      
-      {:error, %Ecto.Changeset{} = changeset} ->
-        Logger.error([errors: changeset.errors])
-        socket = socket 
-          |> put_flash(:error, "Travel is not valid")
-          |> assign_form(changeset)
-        {:noreply, socket}
-    end
-  end
-
   defp calculate_fuel_required(%Ecto.Changeset{} = changeset) do
     mass = Ecto.Changeset.get_field(changeset, :equipment_mass)
     path = Ecto.Changeset.get_field(changeset, :path)
