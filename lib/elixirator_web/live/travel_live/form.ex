@@ -9,14 +9,25 @@ defmodule ElixiratorWeb.TravelLive.Form do
   
   @impl Phoenix.LiveView
   def mount(_params, _session, socket) do
-    travel = %Travel{}
     socket = socket 
-      |> assign(travel: travel, fuel_required: 0) 
-      |> assign_form(Travels.change_travel(travel))
+      |> assign(fuel_required: 0) 
 
     {:ok, socket}
   end
   
+  @impl Phoenix.LiveView
+  def handle_params(params, _uri, socket) do
+    {:noreply, apply_action(socket, socket.assigns.live_action, params)}
+  end
+  
+  defp apply_action(socket, :new, _params) do
+    travel = %Travel{}
+
+    socket
+    |> assign(travel: travel)
+    |> assign_form(Travels.change_travel(travel))
+  end
+
   @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
